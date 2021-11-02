@@ -49,9 +49,9 @@ class Retrieve:
     def docs_to_consider(self, query):
         docID_to_consider = []
         for term in query:
-            term_data = self.index.get(term)
-            if term_data != None:
-                for data in term_data:
+            term_value = self.index.get(term)
+            if term_value != None:
+                for data in term_value:
                     docID_to_consider.append(data)
         return set(docID_to_consider)
 
