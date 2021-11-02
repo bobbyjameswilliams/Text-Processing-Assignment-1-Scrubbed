@@ -18,6 +18,7 @@ class Retrieve:
     # represented as a list of preprocessed terms). Returns list 
     # of doc ids for relevant docs (in rank order).
     def TFIDF_weighted_vector(self):
+        print("This is a test")
         pass
 
     def binary_weighted_vector(self, query):
