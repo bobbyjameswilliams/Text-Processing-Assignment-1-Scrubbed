@@ -17,16 +17,13 @@ class Retrieve:
     # Method performing retrieval for a single query (which is 
     # represented as a list of preprocessed terms). Returns list 
     # of doc ids for relevant docs (in rank order).
-    def for_query(self, query):
-        for word in self.index:
-            value = word.value
-        return list(range(1,11))
-
     def TFIDF_weighted_vector(self):
         pass
 
-    def binary_weighted_vector(self):
-
+    def binary_weighted_vector(self, query):
+        # dictionary with doc index as key and distance as value
+        # for each term in index which is also in query
+        # add docID's to a list
         pass
 
     def frequency_weighted_vector(self):
@@ -46,6 +43,23 @@ class Retrieve:
 
     def calculate_IDF(self):
         pass
+
+    #Returns docIDs of documents that contain words in the query.
+    def docs_to_consider(self, query):
+        docID_to_consider = []
+        for term in query:
+            term_data = self.index.get(term)
+            if term_data != None:
+                for data in term_data:
+                    docID_to_consider.append(data)
+        return set(docID_to_consider)
+
+    def for_query(self, query):
+        doc_IDs_to_consider = self.docs_to_consider(query)
+        print(len(doc_IDs_to_consider))
+        return list(range(1,11))
+
+
 
 
 
