@@ -23,6 +23,7 @@ class Retrieve:
         return list(range(1,11))
 
     def TFIDF_weighted_vector(self):
+        print("This is a test")
         pass
 
     def binary_weighted_vector(self):
