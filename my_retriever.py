@@ -7,12 +7,22 @@ class Retrieve:
         self.index = index
         self.term_weighting = term_weighting
         self.num_docs = self.compute_number_of_documents()
+        if self.term_weighting == 'binary':
+            print("Constructing Documents Binary Weighted Vector... ")
+            self.document_vector = self.binary_weighted_document_vectors()
+
         
+
     def compute_number_of_documents(self):
         self.doc_ids = set()
         for term in self.index:
             self.doc_ids.update(self.index[term])
         return len(self.doc_ids)
+
+
+    def calculate_distance(self, filtered_doc_IDs):
+
+        pass
 
     # Method performing retrieval for a single query (which is 
     # represented as a list of preprocessed terms). Returns list 
@@ -21,12 +31,12 @@ class Retrieve:
         print("This is a test")
         pass
 
-    def binary_weighted_document_vectors(self, query, filtered_doc_IDs):
+    def binary_weighted_document_vectors(self):
         document_vectors = []
-        for ID in filtered_doc_IDs:
+        for ID in self.doc_ids:
             vector = {}
             for term in self.index:
-                if ID in self.index.get(term):
+                if ID in self.index[term]:
                     vector.update({term : 1})
                 else:
                     vector.update({term : 0})
@@ -47,9 +57,8 @@ class Retrieve:
 
     def construct_binary_query_vector(self,query, filtered_doc_IDs):
         print("For " + str(query))
-        print("Constructing Documents Binary Weighted Vector... " )
-        documents_vector = self.binary_weighted_document_vectors(query, filtered_doc_IDs)
-        print("Constructing Query Binary Weighted Vector for... ")
+
+        print("Constructing Query Binary Weighted Vector")
         query_vector = self.binary_weighted_query_vector(query)
         print("######################################")
 
