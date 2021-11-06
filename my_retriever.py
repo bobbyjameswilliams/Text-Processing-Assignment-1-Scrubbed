@@ -7,10 +7,11 @@ class Retrieve:
         self.index = index
         self.term_weighting = term_weighting
         self.num_docs = self.compute_number_of_documents()
-        if self.term_weighting == 'binary':
-            print("Constructing Documents Binary Weighted Vector... ")
-            #make a dictionary of docs
-            self.document_vector = self.binary_weighted_document_vectors()
+
+        print("Constructing Documents Binary Weighted Vector... ")
+        #make a dictionary of docs
+        self.document_vector = self.weighted_document_vectors()
+
 
 
     def compute_number_of_documents(self):
@@ -27,15 +28,12 @@ class Retrieve:
             sigma_d_sqrd = 0
 
             for term in self.document_vector[id]:
-                if term not in self.document_vector[id]:
-                    document_term = 0
-                else:
-                    document_term = self.document_vector[id][term]
+                document_term = self.document_vector[id][term]
 
-                if term not in query_vector[0]:
-                    query_term = 0
-                else:
+                if term in query_vector[0]:
                     query_term = query_vector[0][term]
+                else:
+                    query_term = 0
 
                 sigma_qd += (document_term) * (query_term)
                 sigma_d_sqrd += (document_term ** 2)
@@ -46,20 +44,29 @@ class Retrieve:
         sorted_results = {k: v for k, v in sorted(results.items(), key=lambda item: item[1], reverse= True)}
         return sorted_results
 
-
-    # Method performing retrieval for a single query (which is
-    # represented as a list of preprocessed terms). Returns list 
-    # of doc ids for relevant docs (in rank order).
-
-    def binary_weighted_document_vectors(self):
+    #Generate the document vectors
+    def weighted_document_vectors(self):
+        if self.term_weighting == 'binary':
+            print("Producing Binary Weighted Document Vector...")
+        elif self.term_weighting == 'tf':
+            print("Producing TF Weighted Document Vector...")
         document_vectors = {}
         for doc_id in self.doc_ids:
             vector = {}
             for term in self.index:
                 if doc_id in self.index[term]:
-                    vector.update({term : 1})
+                    if self.term_weighting == 'binary':
+                        vector.update({term : 1})
+                    elif self.term_weighting == 'tf':
+                        vector.update({term: self.index[term][doc_id]})
             document_vectors.update({doc_id : vector})
         return document_vectors
+
+
+    # Method performing retrieval for a single query (which is
+    # represented as a list of preprocessed terms). Returns list 
+    # of doc ids for relevant docs (in rank order).
+
 
     def binary_weighted_query_vector(self,query):
         vector = {}
@@ -71,11 +78,17 @@ class Retrieve:
 
 ### FREQUENCY WEIGHTED
 
-    def frequency_weighted_vector(self):
-        pass
+    def tf_query_vector(self, query):
+        vector = {}
+        for query_term in query:
+            if query_term in vector:
+                newcount = vector[query_term] + 1
+                vector.update({query_term: newcount})
+            else:
+                vector.update({query_term: 1})
 
-    def produce_query_vector(self):
-        pass
+        query_vector = ({0: vector})
+        return query_vector
 
 
 ### TFIDF
@@ -108,13 +121,20 @@ class Retrieve:
     def for_query(self, query):
         print("Filtering Doc IDs ...")
         filtered_doc_IDs = self.filter_documents(query)
+        print("For " + str(query))
         if self.term_weighting == 'binary':
-            print("For " + str(query))
             print("Constructing Query Binary Weighted Vector")
             query_vector = self.binary_weighted_query_vector(query)
             print("######################################")
             processed_results = self.calculate_cosine_distance(filtered_doc_IDs, query_vector)
             return list(processed_results.keys())
+        elif self.term_weighting == 'tf':
+            print("Constructing Query Binary Weighted Vector")
+            query_vector = self.tf_query_vector(query)
+            print("######################################")
+            processed_results = self.calculate_cosine_distance(filtered_doc_IDs, query_vector)
+            return list(processed_results.keys())
+
         else:
             print("Something went wrong...")
 
