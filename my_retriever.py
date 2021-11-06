@@ -1,17 +1,25 @@
+import math
+
 
 class Retrieve:
-    
+
     # Create new Retrieve object storing index and term weighting 
     # scheme. (You can extend this method, as required.)
-    def __init__(self,index, term_weighting):
+    def __init__(self, index, term_weighting):
         self.index = index
         self.term_weighting = term_weighting
         self.num_docs = self.compute_number_of_documents()
+        self.df_index = {}
+        self.idf_index = {}
 
         print("Constructing Documents Binary Weighted Vector... ")
-        #make a dictionary of docs
-        self.document_vector = self.weighted_document_vectors()
-
+        # make a dictionary of docs
+        if self.term_weighting == 'tfidf':
+            self.df_index = self.create_df_index()
+            self.idf_index = self.create_idf_index()
+            self.document_vector = self.weighted_document_vectors()
+        else:
+            self.document_vector = self.weighted_document_vectors()
 
 
     def compute_number_of_documents(self):
@@ -19,7 +27,6 @@ class Retrieve:
         for term in self.index:
             self.doc_ids.update(self.index[term])
         return len(self.doc_ids)
-
 
     def calculate_cosine_distance(self, filtered_doc_IDs, query_vector):
         results = {}
@@ -38,13 +45,13 @@ class Retrieve:
                 sigma_qd += (document_term) * (query_term)
                 sigma_d_sqrd += (document_term ** 2)
 
-            similarity = sigma_qd/(sigma_d_sqrd ** 0.5)
+            similarity = sigma_qd / (sigma_d_sqrd ** 0.5)
 
-            results.update({id : similarity})
-        sorted_results = {k: v for k, v in sorted(results.items(), key=lambda item: item[1], reverse= True)}
+            results.update({id: similarity})
+        sorted_results = {k: v for k, v in sorted(results.items(), key=lambda item: item[1], reverse=True)}
         return sorted_results
 
-    #Generate the document vectors
+    # Generate the document vectors
     def weighted_document_vectors(self):
         if self.term_weighting == 'binary':
             print("Producing Binary Weighted Document Vector...")
@@ -56,27 +63,31 @@ class Retrieve:
             for term in self.index:
                 if doc_id in self.index[term]:
                     if self.term_weighting == 'binary':
-                        vector.update({term : 1})
+                        vector.update({term: 1})
                     elif self.term_weighting == 'tf':
                         vector.update({term: self.index[term][doc_id]})
-            document_vectors.update({doc_id : vector})
-        return document_vectors
+                    elif self.term_weighting == 'tfidf':
+                        term_df = self.df_index[term]
+                        term_idf = self.idf_index[term]
+                        tfidf = term_df * term_idf
+                        vector.update({term: tfidf})
 
+
+            document_vectors.update({doc_id: vector})
+        return document_vectors
 
     # Method performing retrieval for a single query (which is
     # represented as a list of preprocessed terms). Returns list 
     # of doc ids for relevant docs (in rank order).
 
-
-    def binary_weighted_query_vector(self,query):
+    def binary_weighted_query_vector(self, query):
         vector = {}
         for query_term in query:
-            vector.update({query_term : 1})
-        query_vector = ({0 : vector})
+            vector.update({query_term: 1})
+        query_vector = ({0: vector})
         return query_vector
 
-
-### FREQUENCY WEIGHTED
+    ### FREQUENCY WEIGHTED
 
     def tf_query_vector(self, query):
         vector = {}
@@ -90,24 +101,36 @@ class Retrieve:
         query_vector = ({0: vector})
         return query_vector
 
+    def tfidf_query_vector(self, query):
+        vector = {}
+        for query_term in query:
+            if query_term in self.index:
+                term_df = self.df_index[query_term]
+                term_idf = self.idf_index[query_term]
+                tfidf = term_df * term_idf
+                vector.update({query_term: tfidf})
+        query_vector = ({0: vector})
+        return query_vector
 
-### TFIDF
-    def tfidf_weighted_vector(self):
-        pass
 
-    def calculate_similarity(self, query_vector):
-        pass
+    ### TFIDF
+    def create_df_index(self):
+        dictionary = {}
+        for term in self.index:
+            dictionary.update({term: len(self.index[term])})
+        return dictionary
 
-    def calculate_tf(self):
-        pass
+    #Creates it in once pass at the beginning for reference later
+    def create_idf_index(self):
+        dictionary = {}
+        for term in self.df_index:
+            df = self.df_index[term]
+            prelog_idf = (self.num_docs/df)
+            idf = math.log10(prelog_idf)
+            dictionary.update({term: idf})
+        return dictionary
 
-    def calculate_df(self):
-        pass
-
-    def calculate_idf(self):
-        pass
-
-    #Returns docIDs of documents that contain words in the query.
+    # Returns docIDs of documents that contain words in the query.
     def filter_documents(self, query):
         docID_to_consider = []
         for term in query:
@@ -129,12 +152,18 @@ class Retrieve:
             processed_results = self.calculate_cosine_distance(filtered_doc_IDs, query_vector)
             return list(processed_results.keys())
         elif self.term_weighting == 'tf':
-            print("Constructing Query Binary Weighted Vector")
+            print("Constructing Query Frequency Weighted Vector")
             query_vector = self.tf_query_vector(query)
             print("######################################")
             processed_results = self.calculate_cosine_distance(filtered_doc_IDs, query_vector)
             return list(processed_results.keys())
+        elif self.term_weighting == 'tfidf':
+            print("Constructing Query TFIDF Weighted Vector")
+            query_vector = self.tfidf_query_vector(query)
+            print("######################################")
+            processed_results = self.calculate_cosine_distance(filtered_doc_IDs, query_vector)
+            return list(processed_results.keys())
+
 
         else:
             print("Something went wrong...")
-
