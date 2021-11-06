@@ -38,12 +38,13 @@ class Retrieve:
                     query_term = query_vector[0][term]
 
                 sigma_qd += (document_term) * (query_term)
-                sigma_d_sqrd += (document_term ** 2)
+                sigma_d_sqrd += (document_term ** 2) ** 0.5
 
-            similarity = sigma_qd/(sigma_d_sqrd ** 0.5)
+            similarity = sigma_qd/sigma_d_sqrd
 
             results.update({id : similarity})
         sorted_results = {k: v for k, v in sorted(results.items(), key=lambda item: item[1], reverse= True)}
+        sorted_results
         return sorted_results
 
 
@@ -103,9 +104,10 @@ class Retrieve:
                 for data in term_value:
                     docID_to_consider.append(data)
         set_of_docID_to_consider = set(docID_to_consider)
-        return set_of_docID_to_consider
+        return self.doc_ids
 
     def for_query(self, query):
+        match = []
         print("Filtering Doc IDs ...")
         filtered_doc_IDs = self.filter_documents(query)
         if self.term_weighting == 'binary':
