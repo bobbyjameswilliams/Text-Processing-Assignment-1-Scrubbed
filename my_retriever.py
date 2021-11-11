@@ -102,10 +102,6 @@ class Retrieve:
 
         return document_vectors
 
-    # Method performing retrieval for a single query (which is
-    # represented as a list of preprocessed terms). Returns list 
-    # of doc ids for relevant docs (in rank order).
-
     ### QUERY VECTORS ###.
 
     def binary_weighted_query_vector(self, query):
